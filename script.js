@@ -1,6 +1,7 @@
 // 游戏常量
 const GRID_SIZE = 20;
 const TILE_SIZE = 20;
+let score = 0;
 
 // 游戏状态
 let snake = [{
@@ -8,7 +9,7 @@ let snake = [{
     y: Math.floor(Math.random() * GRID_SIZE)
 }];
 let food = {x: 5, y: 5};
-let direction = {x: 1, y: 0};
+let direction = getSafeInitialDirection(snake[0]);
 let gameSpeed = 500;
 let gameOver = false;
 
@@ -17,6 +18,10 @@ const gameBoard = document.getElementById('game-board');
 
 // 初始化游戏
 function initGame() {
+    // 重置得分
+    score = 0;
+    document.getElementById('score-board').textContent = `得分: ${score}`;
+
     // 添加键盘事件监听
     gameBoard.innerHTML = "";
     document.addEventListener('keydown', changeDirection);
@@ -39,7 +44,7 @@ function initGame() {
              y: Math.floor(Math.random() * GRID_SIZE)
          }];
          placeFood();
-         direction = {x: 1, y: 0};
+         direction = getSafeInitialDirection(snake[0]);
          gameSpeed = 500;
          gameOver = false;
         if (startPrompt) {
@@ -104,7 +109,8 @@ function update() {
         snake.some(segment => segment.x === head.x && segment.y === head.y)) {
         gameOver = true;
         if (gameOver) {
-            alert('游戏结束！');
+            alert(`游戏结束！最终得分: ${score}`);
+            document.getElementById('score-board').textContent = `得分: ${score}`;
             initGame();
             return;
         }
@@ -114,6 +120,8 @@ function update() {
     // 移动蛇
     snake.unshift(head);
     if (head.x === food.x && head.y === food.y) {
+        score += 5;
+        document.getElementById('score-board').textContent = `得分: ${score}`;
         placeFood();
     } else {
         snake.pop();
@@ -154,24 +162,29 @@ function placeFood() {
     }
 }
 
-// 改变方向
-function changeDirection(e) {
-    const keyLog = document.getElementById('key-log');
-    keyLog.textContent = `按键: ${e.key}`;
-    switch (e.key) {
-        case 'ArrowUp':
-            if (direction.y === 0) direction = {x: 0, y: -1};
-            break;
-        case 'ArrowDown':
-            if (direction.y === 0) direction = {x: 0, y: 1};
-            break;
-        case 'ArrowLeft':
-            if (direction.x === 0) direction = {x: -1, y: 0};
-            break;
-        case 'ArrowRight':
-            if (direction.x === 0) direction = {x: 1, y: 0};
-            break;
+function getSafeInitialDirection(head) {
+    const safeDirections = [];
+    
+    // 检查水平边界
+    if (head.x === 0) {
+        safeDirections.push({x: 1, y: 0});
+    } else if (head.x === GRID_SIZE - 1) {
+        safeDirections.push({x: -1, y: 0});
+    } else {
+        safeDirections.push({x: 1, y: 0}, {x: -1, y: 0});
     }
+    
+    // 检查垂直边界
+    if (head.y === 0) {
+        safeDirections.push({x: 0, y: 1});
+    } else if (head.y === GRID_SIZE - 1) {
+        safeDirections.push({x: 0, y: -1});
+    } else {
+        safeDirections.push({x: 0, y: 1}, {x: 0, y: -1});
+    }
+    
+    // 随机选择安全方向
+    return safeDirections[Math.floor(Math.random() * safeDirections.length)];
 }
 
 // 启动游戏
